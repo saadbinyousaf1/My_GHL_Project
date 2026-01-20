@@ -1,0 +1,1079 @@
+(function() {
+    'use strict';
+
+    console.log('📅 [GHL-DatePicker-v5] Loading with correct headers...');
+
+    // =================================
+    // CAPTURED AUTH DATA
+    // =================================
+
+    window.__GHL_AUTH__ = {
+        tokenId: null,
+        locationId: null,
+        pipelineId: null,
+        allHeaders: {}
+    };
+
+    window.__GHL_DATE_FILTER__ = {
+        active: false,
+        startDate: null,
+        endDate: null
+    };
+
+    // =================================
+    // XHR INTERCEPTOR - Capture Headers
+    // =================================
+
+    const OrigXHR = window.XMLHttpRequest;
+
+    function createInterceptedXHR() {
+        const xhr = new OrigXHR();
+        const requestInfo = { url: null, method: null, headers: {} };
+
+        const _open = xhr.open;
+        const _send = xhr.send;
+        const _setRequestHeader = xhr.setRequestHeader;
+
+        xhr.open = function(method, url, async, user, pass) {
+            requestInfo.method = method;
+            requestInfo.url = url;
+            return _open.apply(xhr, arguments);
+        };
+
+        xhr.setRequestHeader = function(header, value) {
+            requestInfo.headers[header] = value;
+
+            // Capture token-id (the key header!)
+            if (header.toLowerCase() === 'token-id') {
+                window.__GHL_AUTH__.tokenId = value;
+                console.log('🔑 [AUTH] Captured token-id');
+            }
+
+            // Capture all headers for reuse
+            window.__GHL_AUTH__.allHeaders[header] = value;
+
+            return _setRequestHeader.apply(xhr, arguments);
+        };
+
+        xhr.send = function(body) {
+            // Capture location ID and pipeline ID from request body
+            if (requestInfo.url?.includes('opportunities/search') && body) {
+                try {
+                    const data = JSON.parse(body);
+                    if (data.locationId) {
+                        window.__GHL_AUTH__.locationId = data.locationId;
+                        console.log('📍 [AUTH] Captured locationId:', data.locationId);
+                    }
+                    if (data.filters) {
+                        const pipelineFilter = data.filters.find(f => f.field === 'pipeline_id');
+                        if (pipelineFilter) {
+                            window.__GHL_AUTH__.pipelineId = pipelineFilter.value;
+                            console.log('🔗 [AUTH] Captured pipelineId:', pipelineFilter.value);
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            return _send.apply(xhr, arguments);
+        };
+
+        return xhr;
+    }
+
+    window.XMLHttpRequest = function() {
+        return createInterceptedXHR();
+    };
+
+    Object.keys(OrigXHR).forEach(k => {
+        try { window.XMLHttpRequest[k] = OrigXHR[k]; } catch(e) {}
+    });
+    window.XMLHttpRequest.prototype = OrigXHR.prototype;
+
+    console.log('✅ [XHR] Header interceptor installed');
+
+    // =================================
+    // FETCH INTERCEPTOR
+    // =================================
+
+    const OrigFetch = window.fetch;
+
+    window.fetch = async function(url, options = {}) {
+        const urlStr = typeof url === 'string' ? url : url.toString();
+
+        // Capture headers from fetch requests
+        if (urlStr.includes('leadconnectorhq.com') && options.headers) {
+            const headers = options.headers;
+
+            if (headers instanceof Headers) {
+                headers.forEach((value, key) => {
+                    window.__GHL_AUTH__.allHeaders[key] = value;
+                    if (key.toLowerCase() === 'token-id') {
+                        window.__GHL_AUTH__.tokenId = value;
+                        console.log('🔑 [FETCH-AUTH] Captured token-id');
+                    }
+                });
+            } else if (typeof headers === 'object') {
+                Object.entries(headers).forEach(([key, value]) => {
+                    window.__GHL_AUTH__.allHeaders[key] = value;
+                    if (key.toLowerCase() === 'token-id') {
+                        window.__GHL_AUTH__.tokenId = value;
+                        console.log('🔑 [FETCH-AUTH] Captured token-id');
+                    }
+                });
+            }
+        }
+
+        // Capture locationId from body
+        if (urlStr.includes('opportunities/search') && options.body) {
+            try {
+                const data = JSON.parse(options.body);
+                if (data.locationId) {
+                    window.__GHL_AUTH__.locationId = data.locationId;
+                }
+                if (data.filters) {
+                    const pipelineFilter = data.filters.find(f => f.field === 'pipeline_id');
+                    if (pipelineFilter) {
+                        window.__GHL_AUTH__.pipelineId = pipelineFilter.value;
+                    }
+                }
+            } catch(e) {}
+        }
+
+        return OrigFetch.call(this, url, options);
+    };
+
+    console.log('✅ [FETCH] Header interceptor installed');
+
+    // =================================
+    // DIRECT API CALL WITH CORRECT HEADERS
+    // =================================
+
+    async function searchOpportunitiesAPI(startDate, endDate) {
+        const auth = window.__GHL_AUTH__;
+
+        if (!auth.tokenId) {
+            console.error('❌ No token-id captured yet. Wait for GHL to make a request first.');
+            return null;
+        }
+
+        if (!auth.locationId) {
+            console.error('❌ No locationId captured yet.');
+            return null;
+        }
+
+        const startOfDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 0, 0, 0, 0).getTime();
+        const endOfDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59, 999).getTime();
+
+        const requestBody = {
+            sort: [{ field: 'date_added', direction: 'desc' }],
+            query: '',
+            locationId: auth.locationId,
+            additionalDetails: {
+                notes: true,
+                tasks: true,
+                calendarEvents: true,
+                unReadConversations: true
+            },
+            filters: [
+                {
+                    field: 'date_added',
+                    operator: 'range',
+                    value: {
+                        gte: startOfDay,
+                        lte: endOfDay
+                    }
+                }
+            ],
+            limit: 50,
+            page: 1,
+            aggregations: [
+                {
+                    name: 'pipeline_stages',
+                    type: 'terms',
+                    field: 'pipeline_stage_id',
+                    size: 100,
+                    aggregations: [
+                        { name: 'revenues', type: 'sum', field: 'monetary_value' }
+                    ]
+                }
+            ],
+            includeTopRelations: true
+        };
+
+        // Add pipeline filter if we have one
+        if (auth.pipelineId) {
+            requestBody.filters.unshift({
+                field: 'pipeline_id',
+                operator: 'eq',
+                value: auth.pipelineId
+            });
+        }
+
+        console.log('📤 [API] Making request with correct headers...');
+        console.log('📤 [API] Date range:', startDate.toLocaleDateString(), '-', endDate.toLocaleDateString());
+        console.log('📤 [API] Token-id present:', !!auth.tokenId);
+
+        try {
+            // Use exact same headers as GHL
+            const response = await fetch('https://services.leadconnectorhq.com/opportunities/search', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json',
+                    'channel': 'APP',
+                    'source': 'WEB_USER',
+                    'version': '2021-07-28',
+                    'token-id': auth.tokenId
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            console.log('📥 [API] Response status:', response.status);
+
+            if (!response.ok) {
+                const errText = await response.text();
+                console.error('❌ [API] Request failed:', response.status, errText);
+                return null;
+            }
+
+            const data = await response.json();
+            console.log('✅ [API] Success! Found', data.opportunities?.length || 0, 'opportunities, total:', data.total);
+
+            return data;
+
+        } catch (err) {
+            console.error('❌ [API] Error:', err);
+            return null;
+        }
+    }
+
+    // =================================
+    // STYLES
+    // =================================
+
+    const STYLES = `
+        .ghl-date-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #eaecf0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #344054;
+            transition: all 0.15s ease;
+            margin-left: 8px;
+            height: 36px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .ghl-date-pill:hover {
+            border-color: #155EEF;
+            color: #155EEF;
+        }
+
+        .ghl-date-pill.active {
+            background: rgba(21, 94, 239, 0.08);
+            border-color: #155EEF;
+            color: #155EEF;
+        }
+
+        .ghl-date-pill svg {
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
+        }
+
+        .ghl-calendar-popup {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            display: none;
+            min-width: 600px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .ghl-calendar-popup.show {
+            display: block;
+        }
+
+        .ghl-calendar-panel {
+            display: flex;
+            padding: 16px;
+            gap: 20px;
+        }
+
+        .ghl-calendar {
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .ghl-calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+
+        .ghl-calendar-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #101828;
+            flex: 1;
+            text-align: center;
+        }
+
+        .ghl-calendar-nav {
+            display: flex;
+            gap: 2px;
+        }
+
+        .ghl-calendar-nav button {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #667085;
+            transition: background 0.15s;
+            padding: 0;
+        }
+
+        .ghl-calendar-nav button:hover {
+            background: #f3f3f5;
+        }
+
+        .ghl-calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 12px;
+            color: #667085;
+            font-weight: 500;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eaecf0;
+        }
+
+        .ghl-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .ghl-calendar-day {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #344054;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.1s;
+            user-select: none;
+        }
+
+        .ghl-calendar-day:hover:not(.excluded):not(.selected) {
+            background: #f3f3f5;
+        }
+
+        .ghl-calendar-day.excluded {
+            color: #d0d5dd;
+            cursor: default;
+        }
+
+        .ghl-calendar-day.today {
+            font-weight: 600;
+        }
+
+        .ghl-calendar-day.selected {
+            background: #155EEF !important;
+            color: white !important;
+        }
+
+        .ghl-calendar-day.in-range:not(.selected) {
+            background: rgba(21, 94, 239, 0.1);
+        }
+
+        .ghl-calendar-divider {
+            width: 1px;
+            background: #eaecf0;
+            margin: 0 4px;
+        }
+
+        .ghl-calendar-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-top: 1px solid #eaecf0;
+        }
+
+        .ghl-calendar-status {
+            font-size: 12px;
+            color: #667085;
+        }
+
+        .ghl-calendar-status.ready {
+            color: #22c55e;
+        }
+
+        .ghl-calendar-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .ghl-calendar-btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+        }
+
+        .ghl-calendar-btn.secondary {
+            background: white;
+            border: 1px solid #d0d5dd;
+            color: #344054;
+        }
+
+        .ghl-calendar-btn.secondary:hover {
+            background: #f9fafb;
+        }
+
+        .ghl-calendar-btn.primary {
+            background: #155EEF;
+            color: white;
+        }
+
+        .ghl-calendar-btn.primary:hover {
+            background: #0040DD;
+        }
+
+        .ghl-calendar-btn.primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ghl-date-container {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .ghl-api-results {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 450px;
+            max-height: 70vh;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 10001;
+            display: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .ghl-api-results.show {
+            display: block;
+        }
+
+        .ghl-api-results-header {
+            padding: 16px;
+            border-bottom: 1px solid #eaecf0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ghl-api-results-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #101828;
+        }
+
+        .ghl-api-results-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #667085;
+            font-size: 18px;
+            padding: 4px 8px;
+        }
+
+        .ghl-api-results-body {
+            padding: 16px;
+            max-height: calc(70vh - 60px);
+            overflow-y: auto;
+        }
+
+        .ghl-api-result-item {
+            padding: 12px;
+            border: 1px solid #eaecf0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .ghl-api-result-item:hover {
+            border-color: #155EEF;
+        }
+
+        .ghl-api-result-name {
+            font-weight: 600;
+            color: #101828;
+            margin-bottom: 4px;
+        }
+
+        .ghl-api-result-details {
+            font-size: 12px;
+            color: #667085;
+        }
+
+        .ghl-api-result-value {
+            color: #22c55e;
+            font-weight: 600;
+        }
+    `;
+
+    function injectStyles() {
+        if (document.getElementById('ghl-date-picker-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'ghl-date-picker-styles';
+        style.textContent = STYLES;
+        document.head.appendChild(style);
+    }
+
+    // =================================
+    // CALENDAR COMPONENT
+    // =================================
+
+    class DateRangePicker {
+        constructor() {
+            this.startDate = null;
+            this.endDate = null;
+
+            const now = new Date();
+            this.leftMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            this.rightMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+            this.container = null;
+            this.popup = null;
+            this.pill = null;
+            this.resultsPanel = null;
+            this.isOpen = false;
+            this._eventsAttached = false;
+        }
+
+        formatDateShort(date) {
+            if (!date) return '';
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[date.getMonth()]} ${date.getDate()}`;
+        }
+
+        formatMonthYear(date) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            return `${months[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        isSameDay(d1, d2) {
+            if (!d1 || !d2) return false;
+            return d1.getFullYear() === d2.getFullYear() &&
+                   d1.getMonth() === d2.getMonth() &&
+                   d1.getDate() === d2.getDate();
+        }
+
+        isInRange(date) {
+            if (!this.startDate || !this.endDate) return false;
+            return date > this.startDate && date < this.endDate;
+        }
+
+        isSelected(date) {
+            return this.isSameDay(date, this.startDate) || this.isSameDay(date, this.endDate);
+        }
+
+        generateCalendarDays(monthDate) {
+            const year = monthDate.getFullYear();
+            const month = monthDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startPadding = firstDay.getDay();
+
+            const days = [];
+            const today = new Date();
+
+            const prevMonth = new Date(year, month, 0);
+            for (let i = startPadding - 1; i >= 0; i--) {
+                const date = new Date(year, month - 1, prevMonth.getDate() - i);
+                days.push({ date, excluded: true });
+            }
+
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                const date = new Date(year, month, i);
+                days.push({
+                    date,
+                    excluded: false,
+                    today: this.isSameDay(date, today),
+                    selected: this.isSelected(date),
+                    inRange: this.isInRange(date)
+                });
+            }
+
+            const remaining = 42 - days.length;
+            for (let i = 1; i <= remaining; i++) {
+                const date = new Date(year, month + 1, i);
+                days.push({ date, excluded: true });
+            }
+
+            return days;
+        }
+
+        renderCalendar(monthDate, isLeft) {
+            const days = this.generateCalendarDays(monthDate);
+
+            const navLeft = isLeft ? `
+                <div class="ghl-calendar-nav">
+                    <button data-nav="prev-year">«</button>
+                    <button data-nav="prev-month">‹</button>
+                </div>
+            ` : '<div class="ghl-calendar-nav"></div>';
+
+            const navRight = !isLeft ? `
+                <div class="ghl-calendar-nav">
+                    <button data-nav="next-month">›</button>
+                    <button data-nav="next-year">»</button>
+                </div>
+            ` : '<div class="ghl-calendar-nav"></div>';
+
+            return `
+                <div class="ghl-calendar">
+                    <div class="ghl-calendar-header">
+                        ${navLeft}
+                        <div class="ghl-calendar-title">${this.formatMonthYear(monthDate)}</div>
+                        ${navRight}
+                    </div>
+                    <div class="ghl-calendar-weekdays">
+                        <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                    </div>
+                    <div class="ghl-calendar-grid">
+                        ${days.map(d => `
+                            <div class="ghl-calendar-day ${d.excluded ? 'excluded' : ''} ${d.today ? 'today' : ''} ${d.selected ? 'selected' : ''} ${d.inRange ? 'in-range' : ''}"
+                                 data-date="${d.date.getTime()}"
+                                 data-selectable="${!d.excluded}">
+                                ${d.date.getDate()}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        getAuthStatus() {
+            const auth = window.__GHL_AUTH__;
+            if (auth.tokenId && auth.locationId) {
+                return { ready: true, message: '✓ API Ready' };
+            } else if (auth.tokenId) {
+                return { ready: false, message: '⏳ Waiting for locationId...' };
+            } else {
+                return { ready: false, message: '⏳ Waiting for token...' };
+            }
+        }
+
+        render() {
+            if (!this.popup) return;
+
+            const canConfirm = this.startDate && this.endDate;
+            const authStatus = this.getAuthStatus();
+
+            this.popup.innerHTML = `
+                <div class="ghl-calendar-panel">
+                    ${this.renderCalendar(this.leftMonth, true)}
+                    <div class="ghl-calendar-divider"></div>
+                    ${this.renderCalendar(this.rightMonth, false)}
+                </div>
+                <div class="ghl-calendar-footer">
+                    <div class="ghl-calendar-status ${authStatus.ready ? 'ready' : ''}">${authStatus.message}</div>
+                    <div class="ghl-calendar-actions">
+                        <button class="ghl-calendar-btn secondary" data-action="clear">Clear</button>
+                        <button class="ghl-calendar-btn primary" data-action="confirm" ${canConfirm && authStatus.ready ? '' : 'disabled'}>Apply Filter</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        attachCalendarEvents() {
+            if (this._eventsAttached) return;
+            this._eventsAttached = true;
+
+            this.popup.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                const dayEl = e.target.closest('.ghl-calendar-day[data-selectable="true"]');
+                if (dayEl) {
+                    e.preventDefault();
+                    const timestamp = parseInt(dayEl.dataset.date);
+                    const date = new Date(timestamp);
+                    this.selectDate(date);
+                    return;
+                }
+
+                const navBtn = e.target.closest('[data-nav]');
+                if (navBtn) {
+                    e.preventDefault();
+                    const action = navBtn.dataset.nav;
+
+                    switch(action) {
+                        case 'prev-year':
+                            this.leftMonth = new Date(this.leftMonth.getFullYear() - 1, this.leftMonth.getMonth(), 1);
+                            this.rightMonth = new Date(this.rightMonth.getFullYear() - 1, this.rightMonth.getMonth(), 1);
+                            break;
+                        case 'prev-month':
+                            this.leftMonth = new Date(this.leftMonth.getFullYear(), this.leftMonth.getMonth() - 1, 1);
+                            this.rightMonth = new Date(this.rightMonth.getFullYear(), this.rightMonth.getMonth() - 1, 1);
+                            break;
+                        case 'next-month':
+                            this.leftMonth = new Date(this.leftMonth.getFullYear(), this.leftMonth.getMonth() + 1, 1);
+                            this.rightMonth = new Date(this.rightMonth.getFullYear(), this.rightMonth.getMonth() + 1, 1);
+                            break;
+                        case 'next-year':
+                            this.leftMonth = new Date(this.leftMonth.getFullYear() + 1, this.leftMonth.getMonth(), 1);
+                            this.rightMonth = new Date(this.rightMonth.getFullYear() + 1, this.rightMonth.getMonth(), 1);
+                            break;
+                    }
+                    this.render();
+                    return;
+                }
+
+                const actionBtn = e.target.closest('[data-action]');
+                if (actionBtn) {
+                    e.preventDefault();
+                    const action = actionBtn.dataset.action;
+
+                    if (action === 'clear') {
+                        this.clear();
+                    } else if (action === 'confirm') {
+                        this.confirm();
+                    }
+                }
+            });
+
+            this.popup.addEventListener('mouseover', (e) => {
+                if (!this.startDate || this.endDate) return;
+
+                const dayEl = e.target.closest('.ghl-calendar-day[data-selectable="true"]');
+                if (!dayEl) return;
+
+                const timestamp = parseInt(dayEl.dataset.date);
+                const hoverDate = new Date(timestamp);
+                this.updateRangePreview(hoverDate);
+            });
+        }
+
+        updateRangePreview(hoverDate) {
+            if (!this.startDate || this.endDate) return;
+
+            const start = this.startDate < hoverDate ? this.startDate : hoverDate;
+            const end = this.startDate < hoverDate ? hoverDate : this.startDate;
+
+            this.popup.querySelectorAll('.ghl-calendar-day').forEach(dayEl => {
+                const timestamp = parseInt(dayEl.dataset.date);
+                const date = new Date(timestamp);
+
+                const isStart = this.isSameDay(date, this.startDate);
+                const isEnd = this.isSameDay(date, hoverDate);
+                const isInRange = date > start && date < end;
+
+                dayEl.classList.toggle('selected', isStart || isEnd);
+                dayEl.classList.toggle('in-range', isInRange && !isStart && !isEnd);
+            });
+        }
+
+        selectDate(date) {
+            if (!this.startDate || (this.startDate && this.endDate)) {
+                this.startDate = date;
+                this.endDate = null;
+            } else {
+                if (date < this.startDate) {
+                    this.endDate = this.startDate;
+                    this.startDate = date;
+                } else {
+                    this.endDate = date;
+                }
+            }
+            this.render();
+        }
+
+        clear() {
+            this.startDate = null;
+            this.endDate = null;
+
+            window.__GHL_DATE_FILTER__.active = false;
+            window.__GHL_DATE_FILTER__.startDate = null;
+            window.__GHL_DATE_FILTER__.endDate = null;
+
+            this.updatePill();
+            this.hideResults();
+            this.render();
+        }
+
+        async confirm() {
+            if (!this.startDate || !this.endDate) return;
+
+            const authStatus = this.getAuthStatus();
+            if (!authStatus.ready) {
+                alert('API not ready. Please wait for GHL to make a request first, or refresh the page.');
+                return;
+            }
+
+            window.__GHL_DATE_FILTER__.active = true;
+            window.__GHL_DATE_FILTER__.startDate = this.startDate;
+            window.__GHL_DATE_FILTER__.endDate = this.endDate;
+
+            console.log('📅 [UI] Filter set:', this.startDate.toLocaleDateString(), '-', this.endDate.toLocaleDateString());
+
+            this.updatePill();
+            this.hide();
+
+            // Make direct API call with correct headers
+            const results = await searchOpportunitiesAPI(this.startDate, this.endDate);
+
+            if (results) {
+                this.showResults(results);
+            } else {
+                alert('API request failed. Check console for details.');
+            }
+        }
+
+        showResults(data) {
+            const opportunities = data.opportunities || [];
+            const total = data.total || 0;
+
+            if (!this.resultsPanel) {
+                this.resultsPanel = document.createElement('div');
+                this.resultsPanel.className = 'ghl-api-results';
+                document.body.appendChild(this.resultsPanel);
+            }
+
+            const startStr = this.formatDateShort(window.__GHL_DATE_FILTER__.startDate);
+            const endStr = this.formatDateShort(window.__GHL_DATE_FILTER__.endDate);
+
+            this.resultsPanel.innerHTML = `
+                <div class="ghl-api-results-header">
+                    <div class="ghl-api-results-title">📅 ${startStr} - ${endStr} (${total} total)</div>
+                    <button class="ghl-api-results-close" onclick="this.closest('.ghl-api-results').classList.remove('show')">×</button>
+                </div>
+                <div class="ghl-api-results-body">
+                    ${opportunities.length === 0 ? '<p style="color: #667085; text-align: center; padding: 20px;">No opportunities found in this date range.</p>' : ''}
+                    ${opportunities.map(opp => {
+                        const name = opp.name || opp.contact?.name || opp.contact?.email || 'Unnamed';
+                        const value = opp.monetaryValue ? '$' + opp.monetaryValue.toLocaleString() : '';
+                        const date = opp.dateAdded ? new Date(opp.dateAdded).toLocaleDateString() : '';
+                        const status = opp.status || '';
+
+                        return `
+                            <div class="ghl-api-result-item" data-id="${opp.id}">
+                                <div class="ghl-api-result-name">${name}</div>
+                                <div class="ghl-api-result-details">
+                                    ${value ? `<span class="ghl-api-result-value">${value}</span> | ` : ''}
+                                    ${status} | Added: ${date}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+
+            this.resultsPanel.classList.add('show');
+        }
+
+        hideResults() {
+            if (this.resultsPanel) {
+                this.resultsPanel.classList.remove('show');
+            }
+        }
+
+        updatePill() {
+            if (!this.pill) return;
+
+            const state = window.__GHL_DATE_FILTER__;
+            if (state.active && state.startDate && state.endDate) {
+                this.pill.innerHTML = `
+                    <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21.75,3 C23.5449254,3 25,4.45507456 25,6.25 L25,21.75 C25,23.5449254 23.5449254,25 21.75,25 L6.25,25 C4.45507456,25 3,23.5449254 3,21.75 L3,6.25 C3,4.45507456 4.45507456,3 6.25,3 L21.75,3 Z M23.5,9.503 L4.5,9.503 L4.5,21.75 C4.5,22.7164983 5.28350169,23.5 6.25,23.5 L21.75,23.5 C22.7164983,23.5 23.5,22.7164983 23.5,21.75 L23.5,9.503 Z M21.75,4.5 L6.25,4.5 C5.28350169,4.5 4.5,5.28350169 4.5,6.25 L4.5,8.003 L23.5,8.003 L23.5,6.25 C23.5,5.28350169 22.7164983,4.5 21.75,4.5 Z"/>
+                    </svg>
+                    <span>${this.formatDateShort(state.startDate)} - ${this.formatDateShort(state.endDate)}</span>
+                `;
+                this.pill.classList.add('active');
+            } else {
+                this.pill.innerHTML = `
+                    <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21.75,3 C23.5449254,3 25,4.45507456 25,6.25 L25,21.75 C25,23.5449254 23.5449254,25 21.75,25 L6.25,25 C4.45507456,25 3,23.5449254 3,21.75 L3,6.25 C3,4.45507456 4.45507456,3 6.25,3 L21.75,3 Z M23.5,9.503 L4.5,9.503 L4.5,21.75 C4.5,22.7164983 5.28350169,23.5 6.25,23.5 L21.75,23.5 C22.7164983,23.5 23.5,22.7164983 23.5,21.75 L23.5,9.503 Z M21.75,4.5 L6.25,4.5 C5.28350169,4.5 4.5,5.28350169 4.5,6.25 L4.5,8.003 L23.5,8.003 L23.5,6.25 C23.5,5.28350169 22.7164983,4.5 21.75,4.5 Z"/>
+                    </svg>
+                    <span>Date Range</span>
+                `;
+                this.pill.classList.remove('active');
+            }
+        }
+
+        show() {
+            if (!this.popup || this.isOpen) return;
+
+            this.isOpen = true;
+            this.popup.classList.add('show');
+
+            const now = new Date();
+            this.leftMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            this.rightMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+            const state = window.__GHL_DATE_FILTER__;
+            if (state.active && state.startDate && state.endDate) {
+                this.startDate = state.startDate;
+                this.endDate = state.endDate;
+                this.leftMonth = new Date(state.startDate.getFullYear(), state.startDate.getMonth(), 1);
+                this.rightMonth = new Date(this.leftMonth.getFullYear(), this.leftMonth.getMonth() + 1, 1);
+            }
+
+            this.render();
+        }
+
+        hide() {
+            if (!this.popup) return;
+            this.isOpen = false;
+            this.popup.classList.remove('show');
+        }
+
+        toggle() {
+            if (this.isOpen) this.hide();
+            else this.show();
+        }
+
+        create() {
+            injectStyles();
+
+            this.container = document.createElement('div');
+            this.container.className = 'ghl-date-container';
+            this.container.id = 'ghl-date-picker-container';
+
+            this.pill = document.createElement('button');
+            this.pill.className = 'ghl-date-pill';
+            this.pill.innerHTML = `
+                <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21.75,3 C23.5449254,3 25,4.45507456 25,6.25 L25,21.75 C25,23.5449254 23.5449254,25 21.75,25 L6.25,25 C4.45507456,25 3,23.5449254 3,21.75 L3,6.25 C3,4.45507456 4.45507456,3 6.25,3 L21.75,3 Z M23.5,9.503 L4.5,9.503 L4.5,21.75 C4.5,22.7164983 5.28350169,23.5 6.25,23.5 L21.75,23.5 C22.7164983,23.5 23.5,22.7164983 23.5,21.75 L23.5,9.503 Z M21.75,4.5 L6.25,4.5 C5.28350169,4.5 4.5,5.28350169 4.5,6.25 L4.5,8.003 L23.5,8.003 L23.5,6.25 C23.5,5.28350169 22.7164983,4.5 21.75,4.5 Z"/>
+                </svg>
+                <span>Date Range</span>
+            `;
+
+            this.popup = document.createElement('div');
+            this.popup.className = 'ghl-calendar-popup';
+
+            this.container.appendChild(this.pill);
+            this.container.appendChild(this.popup);
+
+            this.attachCalendarEvents();
+
+            this.pill.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggle();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (this.isOpen && !this.container.contains(e.target)) {
+                    this.hide();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && this.isOpen) {
+                    this.hide();
+                }
+            });
+
+            return this.container;
+        }
+    }
+
+    // =================================
+    // INJECT INTO PAGE
+    // =================================
+
+    let picker = null;
+
+    function injectDatePicker() {
+        if (document.getElementById('ghl-date-picker-container')) return true;
+
+        const sortBtn = document.querySelector('.sort-btn') ||
+                       document.querySelector('#list-view-sort-btn')?.closest('div.sort-btn') ||
+                       document.querySelector('[id*="sort-btn"]')?.parentElement;
+
+        if (!sortBtn) return false;
+
+        picker = new DateRangePicker();
+        const element = picker.create();
+
+        if (sortBtn.nextSibling) {
+            sortBtn.parentNode.insertBefore(element, sortBtn.nextSibling);
+        } else {
+            sortBtn.parentNode.appendChild(element);
+        }
+
+        console.log('✅ [GHL-DatePicker-v5] Injected');
+        return true;
+    }
+
+    function init() {
+        if (!window.location.href.includes('/opportunities')) {
+            setTimeout(init, 1000);
+            return;
+        }
+
+        let attempts = 0;
+        const tryInject = () => {
+            if (injectDatePicker() || attempts > 40) return;
+            attempts++;
+            setTimeout(tryInject, 500);
+        };
+
+        setTimeout(tryInject, 1500);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    let lastUrl = '';
+    setInterval(() => {
+        if (window.location.href !== lastUrl) {
+            lastUrl = window.location.href;
+            document.getElementById('ghl-date-picker-container')?.remove();
+            picker = null;
+            if (window.location.href.includes('/opportunities')) {
+                setTimeout(init, 1000);
+            }
+        }
+    }, 500);
+
+    console.log('📅 [GHL-DatePicker-v5] Ready!');
+
+})();
