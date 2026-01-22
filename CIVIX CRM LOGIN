@@ -1,1 +1,844 @@
+/*SBY LOGIN FOR CIVIXCRM START*/
+/* © SaadBinYousaf - Modified for CivixCRM Dark Theme */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
+/* © SaadBinYousaf */
+/* SCOPED CSS VARIABLES - Only apply to login pages */
+.hl_login,
+#auth-body,
+#auth-setPassword-body {
+  /* © SaadBinYousaf */
+  --main-font: 'Poppins', sans-serif !important;
+  --main-font-color-dark: #ffffff !important;
+  --main-font-color-medium: #e0e0e0 !important;
+  --main-font-color-light: #b0b0b0 !important;
+  /* © SaadBinYousaf */
+  --brand-primary: #8212D0 !important;
+  --brand-secondary: #D11F57 !important;
+  --brand-accent: #43BEFF !important;
+  /* © SaadBinYousaf */
+  --theme-body-image: url('https://storage.googleapis.com/msgsndr/n9d3ZudAkiTBswIbEJOn/media/692fb7d782f4c59862be5632.png') !important;
+  --theme-body-image-size: cover !important;
+  --theme-body-image-position: right bottom !important;
+  --theme-body-bg: #000000 !important;
+  --theme-body-gradient: linear-gradient(170deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%) !important;
+  --theme-card-bg: rgba(20, 20, 30, 0.85) !important;
+  --theme-card-header-bg: transparent !important;
+  --theme-card-border: rgba(130, 18, 208, 0.3) !important;
+  --theme-card-shadow: 0 15px 40px rgba(130, 18, 208, 0.25), 0 8px 20px rgba(209, 31, 87, 0.15) !important;
+  /* © SaadBinYousaf */
+  --login-logo: url('https://storage.googleapis.com/msgsndr/n9d3ZudAkiTBswIbEJOn/media/692fb7a782f4c5ddd5be5096.png') !important;
+  --login-logo-width: 380px !important;
+  --login-logo-aspect: 2.6 !important;
+  /* © SaadBinYousaf */
+  --login-input-color: #ffffff !important;
+  --login-input-bg: rgba(30, 30, 45, 0.6) !important;
+  --login-input-border: rgba(130, 18, 208, 0.4) !important;
+  --login-input-focus-border: var(--brand-accent) !important;
+  /* © SaadBinYousaf */
+  --login-button-color: #FFFFFF !important;
+  --login-button-bg: linear-gradient(135deg, #8212D0 0%, #D11F57 100%) !important;
+  --login-button-hover-bg: linear-gradient(135deg, #9a2ae0 0%, #e53367 100%) !important;
+  /* © SaadBinYousaf */
+  --login-error-color: #ff4757 !important;
+  --login-link-color: var(--brand-accent) !important;
+  --login-link-hover-color: #5acfff !important;
+}
+
+/* © SaadBinYousaf */
+/* HIDE LOGIN HEADER - Only on login pages */
+body.hl_login #hl_header,
+body.hl_login .hl_header,
+body.hl_login .hl_login--header,
+body.hl_login > .container-fluid:first-child {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+.hl_login .hl_login--header {
+  display: none !important;
+}
+
+/* © SaadBinYousaf */
+/* LOGIN PAGE BODY STYLING */
+.hl_login {
+  display: grid !important;
+  place-items: center !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  padding: 24px !important;
+  box-sizing: border-box !important;
+  background-color: var(--theme-body-bg) !important;
+  background-image: var(--theme-body-gradient), var(--theme-body-image) !important;
+  background-size: cover, var(--theme-body-image-size) !important;
+  background-position: center, var(--theme-body-image-position) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  font-family: var(--main-font) !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* © SaadBinYousaf */
+.hl_login .hl_login--body {
+  width: 100% !important;
+  max-width: 480px !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: auto !important;
+  height: auto !important;
+  margin: auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: none !important;
+}
+
+.hl_login .hl_login--body .container-fluid {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* © SaadBinYousaf */
+/* LOGIN CARD STYLING */
+.hl_login .hl_login--body .card {
+  border: 1px solid var(--theme-card-border) !important;
+  background: var(--theme-card-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: var(--theme-card-shadow) !important;
+  border-radius: 20px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  height: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* © SaadBinYousaf */
+.hl_login .hl_login--body .card .login-card-heading {
+  margin: 0 !important;
+  padding: 1.5rem 2rem 1rem 2rem !important;
+  background-color: var(--theme-card-header-bg) !important;
+  text-align: center !important;
+  border-bottom: none !important;
+}
+
+.hl_login #app > div > div:nth-child(1) > div.flex.v2-open.sidebar-v2-agency > section > div.hl_login--body > div > div > div > div.login-card-heading > h4 {
+  color: var(--brand-accent) !important;
+}
+
+/* © SaadBinYousaf */
+.hl_login .hl_login--body .card .card-body {
+  flex-grow: 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 2rem 3rem !important;
+  margin: 0 !important;
+  text-align: left !important;
+  box-sizing: border-box !important;
+  height: auto !important;
+}
+
+/* © SaadBinYousaf */
+/* LOGO DISPLAY */
+.hl_login .hl_login--body .card .login-card-heading:before,
+.hl_login .hl_login--body .card:before {
+  content: '' !important;
+  background-image: var(--login-logo) !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  display: block !important;
+  width: min(100%, var(--login-logo-width)) !important;
+  height: auto !important;
+  aspect-ratio: var(--login-logo-aspect) !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+}
+
+.hl_login .hl_login--body .card:before {
+  display: none !important;
+}
+
+.hl_login .hl_login--body .card .login-card-heading:before {
+  display: block !important;
+}
+
+/* © SaadBinYousaf */
+.hl_login .hl_login--body .card .login-card-heading h2.heading2 {
+  color: var(--brand-accent) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  font-size: 1.1rem !important;
+  margin: 0.5rem 0 0 0 !important;
+  padding: 0 !important;
+}
+
+/* © SaadBinYousaf */
+.hl_login .hl_login--body .container-fluid > .card .login-card-heading h2.heading2:after,
+.hl_login .hl_login--body p.foot-note:before {
+  display: none !important;
+}
+
+/* © SaadBinYousaf */
+/* FORM INPUTS */
+.hl_login .hl_login--body .card .form-group {
+  position: relative !important;
+  margin: 20px 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.hl_login .hl_login--body .card .card-body label,
+.hl_login .hl_login--body .card .card-body span.hl-text-input-label {
+  display: block !important;
+  font-weight: 600 !important;
+  color: var(--main-font-color-dark) !important;
+  margin-bottom: 6px !important;
+  font-size: 0.875rem !important;
+  text-indent: 0 !important;
+}
+
+/* © SaadBinYousaf */
+.hl_login .hl_login--body .card .left-0.mx-2.hl-text-input-addon:before {
+  display: none !important;
+}
+
+/* © SaadBinYousaf */
+.hl_login .hl_login--body .card .card-body input {
+  background: var(--login-input-bg) !important;
+  border: 1px solid var(--login-input-border) !important;
+  color: var(--login-input-color) !important;
+  border-radius: 10px !important;
+  height: 52px !important;
+  padding: 0 16px !important;
+  font-size: 0.95rem !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.hl_login .hl_login--body .card .card-body input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+  opacity: 1 !important;
+}
+
+.hl_login .hl_login--body .card .card-body input:focus {
+  outline: none !important;
+  border-color: var(--login-input-focus-border) !important;
+  background: rgba(30, 30, 45, 0.8) !important;
+  box-shadow: 0 0 0 3px rgba(67, 190, 255, 0.25), 0 0 20px rgba(67, 190, 255, 0.15) !important;
+}
+
+.hl_login .hl_login--body .card .card-body input:-webkit-autofill,
+.hl_login .hl_login--body .card .card-body input:-webkit-autofill:hover,
+.hl_login .hl_login--body .card .card-body input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--login-input-color) !important;
+  caret-color: var(--login-input-color) !important;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(30, 30, 45, 0.6) inset !important;
+  box-shadow: 0 0 0px 1000px rgba(30, 30, 45, 0.6) inset !important;
+  transition: background-color 9999s ease-in-out 0s !important;
+}
+
+/* © SaadBinYousaf */
+.hl_login .hl_login--body .card .forgot-password {
+  display: inline-block !important;
+  color: var(--login-link-color) !important;
+  text-decoration: none !important;
+  transition: color 0.2s ease !important;
+  font-size: 0.85rem !important;
+  margin-top: 5px !important;
+}
+
+.hl_login .hl_login--body .card .forgot-password:hover {
+  color: var(--login-link-hover-color) !important;
+  text-decoration: underline !important;
+}
+
+/* © SaadBinYousaf */
+/* ERROR MESSAGES */
+.hl_login .hl_login--body .card .form-group .error,
+.hl_login .hl_login--body .card .form-group .hl-input-error {
+  display: block !important;
+  width: 100% !important;
+  color: var(--login-error-color) !important;
+  font-size: 0.85rem !important;
+  text-align: left !important;
+  margin-top: 4px !important;
+}
+
+.hl_login .hl_login--body .card .form-group i {
+  color: var(--login-error-color) !important;
+}
+
+/* © SaadBinYousaf */
+/* BUTTONS */
+.hl_login .hl_login--body .card .form-group.button-holder {
+  margin-top: 25px !important;
+  margin-bottom: 20px !important;
+}
+
+.hl_login .hl_login--body .card .card-body .hl-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 56px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  background: var(--login-button-bg) !important;
+  color: var(--login-button-color) !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 8px 25px rgba(130, 18, 208, 0.4), 0 4px 15px rgba(209, 31, 87, 0.3) !important;
+  transition: all 0.3s ease-out !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.hl_login .hl_login--body .card .card-body .hl-btn:before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent) !important;
+  transition: left 0.5s ease !important;
+}
+
+.hl_login .hl_login--body .card .card-body .hl-btn:hover:before {
+  left: 100% !important;
+}
+
+.hl_login .hl_login--body .card .card-body .hl-btn:hover {
+  background: var(--login-button-hover-bg) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 35px rgba(130, 18, 208, 0.5), 0 6px 20px rgba(209, 31, 87, 0.4) !important;
+}
+
+.hl_login .hl_login--body .card .card-body .hl-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 5px 15px rgba(130, 18, 208, 0.3), 0 3px 10px rgba(209, 31, 87, 0.2) !important;
+}
+
+/* © SaadBinYousaf */
+/* FOOTER LINKS */
+.hl_login .hl_login--body .card .w-full.border-t.border-gray-300 {
+  border-color: rgba(130, 18, 208, 0.2) !important;
+  margin-top: 20px !important;
+  padding-top: 20px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.hl_login .hl_login--body .card .card-body p,
+.hl_login .hl_login--body .card .card-body .foot-note {
+  color: var(--main-font-color-medium) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  font-size: 0.85rem !important;
+  line-height: 1.4 !important;
+  text-align: center !important;
+}
+
+.hl_login .hl_login--body .card .card-body p a,
+.hl_login .hl_login--body .card .card-body .foot-note a {
+  color: var(--login-link-color) !important;
+  text-decoration: none !important;
+  font-weight: 600 !important;
+  transition: color 0.2s ease !important;
+}
+
+.hl_login .hl_login--body .card .card-body p a:hover,
+.hl_login .hl_login--body .card .card-body .foot-note a:hover {
+  color: var(--login-link-hover-color) !important;
+  text-decoration: underline !important;
+}
+
+/* © SaadBinYousaf */
+/* RADIO BUTTONS */
+.hl_login .login-card-heading + div {
+  padding: 0 2rem 1rem 2rem !important;
+  background: var(--theme-card-header-bg) !important;
+  border-bottom: none !important;
+}
+
+.hl_login .login-card-heading + div > div input[type="radio"] {
+  display: none !important;
+}
+
+.hl_login .login-card-heading + div > div input[type="radio"] + label:before {
+  width: 20px !important;
+  height: 20px !important;
+  content: '' !important;
+  display: block !important;
+  border: 2px solid var(--brand-primary) !important;
+  background-color: rgba(30, 30, 45, 0.6) !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5.414 11L4 12.414l5.414 5.414L20.828 6.414 19.414 5l-10 10z' fill='%23fff' fill-rule='nonzero'/%3E%3C/svg%3E ") !important;
+  background-repeat: no-repeat !important;
+  background-position: 0px -2px !important;
+  background-size: 20px 20px !important;
+  border-radius: 50% !important;
+  z-index: 2 !important;
+  margin-top: 8px !important;
+  margin-left: -8px !important;
+  position: absolute !important;
+  transform: translateY(-50%) !important;
+  cursor: pointer !important;
+  transition: all 200ms ease-in !important;
+}
+
+.hl_login .login-card-heading + div > div input[type="radio"]:checked + label:before {
+  background-color: var(--brand-primary) !important;
+  border-color: var(--brand-primary) !important;
+  box-shadow: 0 0 10px rgba(130, 18, 208, 0.5) !important;
+}
+
+.hl_login .login-card-heading + div > div input[type="radio"]:checked + label {
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: var(--main-font-color-dark) !important;
+}
+
+.hl_login .login-card-heading + div p.ml-2 {
+  display: block !important;
+  text-indent: 15px !important;
+  color: var(--main-font-color-medium) !important;
+}
+
+.hl_login .hl_login--body label {
+  cursor: pointer !important;
+  text-indent: 15px !important;
+  color: var(--main-font-color-medium) !important;
+}
+
+/* © SaadBinYousaf */
+/* SET PASSWORD / RESET PASSWORD PAGES */
+#auth-set-password *,
+#auth-body * {
+  font-family: var(--main-font) !important;
+}
+
+#auth-set-password #form,
+#auth-body #form {
+  width: 100% !important;
+}
+
+#auth-body .hl-card .hl-card-header {
+  display: none !important;
+}
+
+#auth-body,
+#auth-setPassword-body {
+  background-color: var(--theme-body-bg) !important;
+  background-image: var(--theme-body-gradient), var(--theme-body-image) !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+#auth-body:before,
+#auth-setPassword-body:before {
+  display: none !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .hl-card,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card {
+  width: 100% !important;
+  max-width: 480px !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: auto !important;
+  height: auto !important;
+  margin: auto !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: none !important;
+}
+
+/* © SaadBinYousaf - Forgot Password Card BG */
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card {
+  background: var(--theme-card-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow: var(--theme-card-shadow) !important;
+  border: 1px solid var(--theme-card-border) !important;
+  border-radius: 20px !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .hl-card .card-body,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .login-card-heading {
+  margin: 0 !important;
+  padding: 1.5rem 2rem 1rem 2rem !important;
+  background-color: var(--theme-card-header-bg) !important;
+  text-align: center !important;
+  border-bottom: none !important;
+}
+
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .card-body {
+  padding: 2rem 3rem !important;
+  background: none !important;
+  flex-grow: 1 !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .hl-card .hl-card-footer,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .card-body .form-group.button-holder {
+  border: none !important;
+  background: none !important;
+  padding: 1.5rem 3rem 2.5rem 3rem !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .card-body .form-group.button-holder {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-top: 10px !important;
+  padding-bottom: 0 !important;
+  margin-top: 10px !important;
+  margin-bottom: 0 !important;
+}
+
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .card-body {
+  border: none !important;
+  background: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  width: 100% !important;
+  padding: 2rem 3rem !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .card-body .hl-text-input-label.text-gray-700.text-lg:before,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .login-card-heading:before {
+  content: '' !important;
+  background-image: var(--login-logo) !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  display: block !important;
+  width: min(100%, var(--login-logo-width)) !important;
+  height: auto !important;
+  aspect-ratio: var(--login-logo-aspect) !important;
+  margin: 0 auto 1rem auto !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .card-body .hl-text-input-label.text-gray-700.text-lg,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .login-card-heading h2.heading2 {
+  color: var(--brand-accent) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  font-size: 1.1rem !important;
+  margin: 0 0 0 0 !important;
+  padding: 0 !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .card-body span,
+#auth-body .card-body p,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card span,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card p {
+  color: var(--main-font-color-medium) !important;
+  font-size: 0.85rem !important;
+}
+
+#auth-body .card-body .n-form-item-label,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card label,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card span.hl-text-input-label {
+  color: var(--main-font-color-dark) !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  display: block !important;
+  margin-bottom: 6px !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .card-body .n-input,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card input {
+  background: var(--login-input-bg) !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 10px !important;
+  height: 52px !important;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border: 1px solid var(--login-input-border) !important;
+}
+
+#auth-body .card-body .n-input .n-input__border,
+#auth-body .card-body .n-input .n-input__state-border {
+  border: 1px solid var(--login-input-border) !important;
+  border-radius: 10px !important;
+}
+
+#auth-body .card-body .n-input.n-input--focus .n-input__state-border,
+#auth-body .card-body .n-input:focus .n-input__state-border,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card input:focus {
+  border-color: var(--login-input-focus-border) !important;
+  box-shadow: 0 0 0 3px rgba(67, 190, 255, 0.25), 0 0 20px rgba(67, 190, 255, 0.15) !important;
+  background: rgba(30, 30, 45, 0.8) !important;
+  outline: none !important;
+}
+
+#auth-body .card-body .n-input input,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card input {
+  color: var(--login-input-color) !important;
+  border-radius: 10px !important;
+  height: 50px !important;
+  padding: 0 16px !important;
+  font-size: 0.95rem !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+  opacity: 1 !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .card-body .n-form-item-feedback-wrapper,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .form-group .error,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .form-group .hl-input-error {
+  text-align: left !important;
+  display: block !important;
+  width: 100% !important;
+  margin-top: 4px !important;
+  color: var(--login-error-color) !important;
+  font-size: 0.85rem !important;
+}
+
+#auth-body .card-body .n-form-item-feedback {
+  text-align: left !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .hl-card-footer button.n-button.n-button--primary-type,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .hl-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 56px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  background: var(--login-button-bg) !important;
+  color: var(--login-button-color) !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 8px 25px rgba(130, 18, 208, 0.4), 0 4px 15px rgba(209, 31, 87, 0.3) !important;
+  transition: all 0.3s ease-out !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+#auth-body .hl-card-footer button.n-button.n-button--primary-type:before,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .hl-btn:before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent) !important;
+  transition: left 0.5s ease !important;
+}
+
+#auth-body .hl-card-footer button.n-button.n-button--primary-type:hover:before,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .hl-btn:hover:before {
+  left: 100% !important;
+}
+
+#auth-body .hl-card-footer button.n-button.n-button--primary-type:hover,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .hl-btn:hover {
+  background: var(--login-button-hover-bg) !important;
+  color: var(--login-button-color) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 35px rgba(130, 18, 208, 0.5), 0 6px 20px rgba(209, 31, 87, 0.4) !important;
+}
+
+#auth-body .hl-card-footer button.n-button.n-button--primary-type .n-button__border,
+#auth-body .hl-card-footer button.n-button.n-button--primary-type .n-button__state-border {
+  display: none !important;
+}
+
+#auth-body .hl-card-footer button.n-button.n-button--primary-type span.n-button__content,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .hl-btn span {
+  color: var(--login-button-color) !important;
+  background: transparent !important;
+}
+
+#auth-body .hl-card-footer button.n-button:hover span.n-button__content,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card .hl-btn:hover span {
+  color: var(--login-button-color) !important;
+}
+
+#auth-setPassword-body .flex.items-end.justify-end {
+  justify-content: center !important;
+}
+
+button#set-password-btn,
+button#resend-activation-link-btn,
+button#send_forgot_password_req {
+  width: 100% !important;
+  min-height: 56px !important;
+  height: 56px !important;
+}
+
+/* © SaadBinYousaf */
+#auth-body .card-body .n-input.n-input--error-status:not(.n-input--disabled) .n-input__state-border,
+#auth-body .card-body .n-input.n-input--error-status .n-input__border,
+.hl_login .hl_login--body:has(button[id="send_forgot_password_req"]) .card input.border-red-600 {
+  border: 1px solid var(--login-error-color) !important;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.3) !important;
+}
+
+.hl_login .card-body > div {
+  padding: 0px !important;
+}
+
+/* © SaadBinYousaf */
+/* RESPONSIVE DESIGN */
+@media (max-width: 640px) {
+  .hl_login {
+    padding: 0 !important;
+  }
+  
+  .hl_login .hl_login--body {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  .hl_login .hl_login--body .card,
+  #auth-body .hl-card {
+    border-radius: 0 !important;
+    border: none !important;
+    min-height: 100vh !important;
+    box-shadow: none !important;
+  }
+  
+  #auth-body.h-screen {
+    padding: 0 !important;
+  }
+  
+  .hl_login .hl_login--body .card .login-card-heading,
+  #auth-body .hl-card .card-body {
+    padding: 1.5rem 1rem 1rem 1rem !important;
+  }
+  
+  .hl_login .hl_login--body .card .card-body,
+  #auth-body .hl-card .hl-card-footer {
+    padding: 1.5rem 1.5rem !important;
+  }
+  
+  .hl_login .login-card-heading + div {
+    padding: 0 1rem 1rem 1rem !important;
+  }
+  
+  .hl_login,
+  #auth-body,
+  #auth-setPassword-body {
+    --login-logo-width: 280px !important;
+  }
+}
+
+@media (max-height: 700px) {
+  .hl_login {
+    align-items: flex-start !important;
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+  }
+  
+  .hl_login .hl_login--body {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+/* © SaadBinYousaf */
+/* BACKGROUND STYLING - ONLY FOR LOGIN PAGES */
+.hl_login,
+#auth-body.h-screen,
+#auth-setPassword-body {
+  background-color: #000000 !important;
+  background-image: url('https://storage.googleapis.com/msgsndr/n9d3ZudAkiTBswIbEJOn/media/692fb7d782f4c59862be5632.png') !important;
+  background-repeat: no-repeat !important;
+  background-position: right bottom !important;
+  background-size: cover !important;
+  background-attachment: scroll !important;
+  min-height: 100svh !important;
+  height: auto !important;
+}
+
+/* Additional glow effects for dark theme - LOGIN PAGES ONLY */
+.hl_login .hl_login--body .card {
+  position: relative !important;
+}
+
+.hl_login .hl_login--body .card:after {
+  content: '' !important;
+  position: absolute !important;
+  top: -2px !important;
+  left: -2px !important;
+  right: -2px !important;
+  bottom: -2px !important;
+  background: linear-gradient(135deg, rgba(130, 18, 208, 0.3), rgba(209, 31, 87, 0.3), rgba(67, 190, 255, 0.3)) !important;
+  border-radius: 20px !important;
+  z-index: -1 !important;
+  opacity: 0.5 !important;
+  filter: blur(10px) !important;
+}
+
+/* Enhance focus states with brand colors - LOGIN PAGES ONLY */
+.hl_login .hl_login--body .card .card-body input:focus {
+  border-color: var(--brand-accent) !important;
+  box-shadow: 0 0 0 3px rgba(67, 190, 255, 0.3), 0 0 25px rgba(67, 190, 255, 0.2), 0 0 15px rgba(130, 18, 208, 0.15) !important;
+}
+
+/*SBY LOGIN FOR CIVIXCRM END*/
